@@ -9,11 +9,13 @@ ORS_API_KEY = "5b3ce3597851110001cf624855631f968bc045de9321e2911cf0396f"
 ORS_GEOCODE_URL = "https://api.openrouteservice.org/geocode/search"
 ORS_DIRECTIONS_URL = "https://api.openrouteservice.org/v2/directions/driving-car"
 
+# Carrega os modelos
 modelos = {}
-for nome_arquivo in os.listdir("modelos"):
+modelos_path = os.path.join(os.getcwd(), "modelos")
+for nome_arquivo in os.listdir(modelos_path):
     if nome_arquivo.endswith(".pkl"):
         categoria = nome_arquivo.replace("model_", "").replace(".pkl", "")
-        modelos[categoria] = joblib.load(os.path.join("modelos", nome_arquivo))
+        modelos[categoria] = joblib.load(os.path.join(modelos_path, nome_arquivo))
 
 def geocode(endereco):
     params = {
@@ -58,7 +60,10 @@ def prever():
     if distancia is None:
         return jsonify({"erro": "Erro ao calcular rota"}), 500
 
-    precos = {categoria: round(model.predict([[distancia, duracao]])[0], 2) for categoria, model in modelos.items()}
+    precos = {
+        categoria: round(model.predict([[distancia, duracao]])[0], 2)
+        for categoria, model in modelos.items()
+    }
 
     return jsonify({
         "origem": origem,
@@ -67,3 +72,8 @@ def prever():
         "duracao_min": duracao,
         "precos_estimados": precos
     })
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
